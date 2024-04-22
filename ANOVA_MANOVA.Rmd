@@ -1,0 +1,321 @@
+---
+title: "MANOVA"
+author: "Julien Royer"
+date: "1/7/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r, packages}
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(ggpubr)
+library(pairwiseComparisons)
+library(tidyverse)
+library(rstatix)
+library(emmeans)
+library(multcompView)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r, MANOVA}
+d13C <- anova(lm(as.numeric(d13C_col)~Antlers, data = MANOVA))
+d13C
+out <- HSD.test(d13C,"Antlers", group=TRUE,console=TRUE)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r, ANOVA}
+anova(lm(as.numeric(d13C_app)~Antlers, data = MANOVA))
+```
+
+```{r, MANOVA}
+kruskal.test(as.numeric(d18O_app) ~ Antlers, data = MANOVA)
+```
+
+```{r, Kruskal.test}
+kruskal.test(as.numeric(d15N_col) ~ Antlers, data = MANOVA)
+```
+
+```{r,tukey hsd}
+pwc <- MANOVA %>% 
+  dunn_test(d15N_col ~ Antlers, p.adjust.method = "bonferroni")
+pwc
+```
+
+```{r,tukey hsd}
+pwc <- MANOVA %>% 
+  dunn_test(d18O_app ~ Antlers, p.adjust.method = "bonferroni")
+pwc
+```
+
+```{r,tukey hsd}
+pwe <- MANOVA %>% 
+  dunn_test(d13C_col ~ Antlers, p.adjust.method = "bonferroni")
+pwe
+```
+
+```{r,tukey hsd}
+pwf <- MANOVA %>% 
+  dunn_test(d13C_app ~ Antlers, p.adjust.method = "bonferroni")
+pwf
+```
+
+```{r, mean plots}
+ggboxplot(MANOVA, x = "Antlers", y = "d15N_col", 
+          color = "Antlers", palette = c("#00AFBB", "#E7B800", "#FC4E07", "#bb0042"),
+          order = c("PEL-0090", "PEL-0114", "PEL-0164", "PEL-0165"),
+          ylab = "δ15N‰", xlab = "Antlers")
+```
+
+```{r, mean plots}
+bxplt <- ggboxplot(MANOVA, x = "Antlers", y = "d13C_app", 
+          color = "Antlers", palette = c("#00AFBB", "#E7B800", "#FC4E07", "#bb0042"),
+          order = c("PEL-0090", "PEL-0114", "PEL-0164", "PEL-0165"),
+          ylab = "δ13C‰", xlab = "Antlers")
+bxplt
+sp <- ggscatter(MANOVA, x = "d13C_app", y = "d18O_app",
+                add = "reg.line",               
+                conf.int = TRUE,                
+                color = "Antlers", palette = "jco", 
+                shape = "Antlers"                   
+                )+
+  stat_cor(aes(color = Antlers), label.x = 3)       
+sp
+```
+
+```{r, mean plots}
+bxplt <- ggboxplot(MANOVA, x = "Antlers", y = "d13C_app", 
+          color = "Antlers", palette = c("#00AFBB", "#E7B800", "#FC4E07", "#bb0042"),
+          order = c("PEL-0090", "PEL-0114", "PEL-0164", "PEL-0165", size = 12),
+          ylab = "δ13C‰", xlab = "Antlers")
+bxplt
+sp <- ggplot(MANOVA, aes(x = d13C_app, y = d18O_app, color = Antlers)) +
+  geom_point() +
+  stat_ellipse(geom = "polygon",
+               aes(fill = Antlers), 
+               alpha = 0.25)+
+  theme_bw()+
+  xlab(expression(delta^13*"C"[VPDB]*~"apatite (‰)"))+
+  ylab(expression(delta^18*"O"[VPDB]*~"(‰)"))+ 
+  theme(text = element_text(size = 14))
+sp
+```
+
+```{r, mean plots}
+bxplt <- ggboxplot(MANOVA, x = "Antlers", y = "d13C_col", 
+          color = "Antlers", palette = c("#00AFBB", "#E7B800", "#FC4E07", "#bb0042"),
+          order = c("PEL-0090", "PEL-0114", "PEL-0164", "PEL-0165"),
+          ylab = "δ13C‰", xlab = "Antlers")
+bxplt
+sp <- ggplot(MANOVA, aes(x = d13C_col, y = d15N_col, color = Antlers)) +
+  geom_point() +
+  stat_ellipse(geom = "polygon",
+               aes(fill = Antlers), 
+               alpha = 0.25)+
+  theme_bw()+
+  xlab(expression(delta^13*"C"[VPDB]*~"collagen (‰)"))+
+  ylab(expression(delta^15*"N"[Air]*~"(‰)"))+ 
+  theme(text = element_text(size = 14))
+sp
+```
+
+```{r, isotope}
+MANOVA %>%
+ggplot(aes(x = d13C_app,
+             y = d18O_app))+
+  geom_mark_rect(aes(fill = Antlers,
+                        label = Antlers),
+                    expand = unit(0.5,"mm"),
+                    label.buffer = unit(-5, 'mm'))+
+  geom_point(aes(color = Antlers))+
+  theme(legend.position = "none")
+ggsave("annotate_groups_clusters_with_ellipse_labels_fill_ggplot2.png")
+```
+
+```{r, plots}
+ggplot(MANOVA, aes(x = d13C_app, y = d18O_app, color = Antlers)) +
+  geom_point() +
+  stat_ellipse(geom = "polygon",
+               aes(fill = group), 
+               alpha = 0.25)
+```
+
+```{r, arrange}
+ggarrange(bxplt, sp + rremove("x.text"), 
+          labels = c("A", "B", "C"),
+          ncol = 2, nrow = 1.7)
+```
+
+```{r, mean plots}
+dpc <- ggboxplot(MANOVA, x = "Antlers", y = "d13C_col", 
+          color = "Antlers", palette = c("#00AFBB", "#E7B800", "#FC4E07", "#bb0042"),
+          order = c("PEL-0090", "PEL-0114", "PEL-0164", "PEL-0165"),
+          ylab = "δ13C ‰", xlab = "Antlers")+
+  labs(title="δ13C ‰ appatite of Antlers",x="Antlers (PEL-#)", y = "δ13C ‰")
+dpc
+```
+
+```{r, mean plots}
+dpd <- ggboxplot(MANOVA, x = "Antlers", y = "d18O_app", 
+          color = "Antlers", palette = c("#00AFBB", "#E7B800", "#FC4E07", "#bb0042"),
+          order = c("PEL-0090", "PEL-0114", "PEL-0164", "PEL-0165"),
+          ylab = "δ18O ‰", xlab = "Antlers")+
+  labs(title="δ18O ‰ of Antlers",x="Antlers (PEL-#)", y = "δ18O ‰")
+dpd
+```
+
+```{r, mean plots}
+dpe <- ggboxplot(MANOVA, x = "Antlers", y = "d13C_col", 
+          color = "Antlers", palette = c("#00AFBB", "#E7B800", "#FC4E07", "#bb0042"),
+          order = c("PEL-0090", "PEL-0114", "PEL-0164", "PEL-0165"),
+          ylab = "δ13C ‰", xlab = "Antlers")+
+  labs(title="δ13C ‰ collagen of Antlers",x="Antlers (PEL-#)", y = "δ13C ‰")
+dpe
+```
+
+```{r, mean plots}
+dpf <- ggboxplot(MANOVA, x = "Antlers", y = "d15N_col", 
+          color = "Antlers", palette = c("#00AFBB", "#E7B800", "#FC4E07", "#bb0042"),
+          order = c("PEL-0090", "PEL-0114", "PEL-0164", "PEL-0165"),
+          ylab = "δ15N ‰", xlab = "Antlers")+
+  labs(title="δ15N ‰ of Antlers",x="Antlers (PEL-#)", y = "δ15N ‰")
+dpf
+```
+
+```{r, mean plots}
+ggboxplot(MANOVA, x = "Antlers", y = "d18O_app", 
+          color = "Antlers", palette = c("#00AFBB", "#E7B800", "#FC4E07", "#bb0042"),
+          order = c("PEL-0090", "PEL-0114", "PEL-0164", "PEL-0165"),
+          ylab = "δ18O ‰", xlab = "Antlers")
+```
+
+```{r}
+ggplot(aes(x = "Antlers", y = "d15N_col", fill = "d15N_col"), data = MANOVA)+
+  geom_violin(trim = FALSE, alpha = 0.8)+
+  geom_boxplot(outlier.colour = NA, aplha = 0.3,color="black", width=.1)+
+  theme_bw() +
+  theme(axis.text.y = element_text(size = 10),
+        axis.text.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10),
+        axis.title.x = element_text(size = 10),
+        panel.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black", fill = NA, size = 1),
+        legend.position = "none", legend.text = element_text(size = 16), legend.key.size = unit(1, "cm"))+
+        scale_fill_manual(values = c("#225ea8", "#41b6c4", "#7fcdbb", "#ffffd9"))+
+  facet_wrap(~location, ncol=2, scales="free") +
+  coord_flip()+
+  xlab("Diet Proportions")+
+  ggsave(filename = "ANOVA_MANOVA.tiff", width = 8, height = 7)
+```
+
+```{r}
+dp <- ggplot(MANOVA, aes(x=Antlers, y=d13C_app, fill=Antlers)) + 
+  geom_violin(trim=FALSE)+
+  geom_boxplot(width=0.1, fill="white")+
+  labs(title="Antler distribution of ẟ13C apatite values",x="Antlers (PEL-#)", y = "ẟ13C apatite ‰")
+dp + theme_classic()+
+  geom_jitter(position=position_jitter(width = 0.08), alpha=0.3)+ 
+  theme(text = element_text(size = 14))+
+  ylab(expression(delta^13*"C"[VBDP]*~"apatite (‰)"))
+```
+
+```{r}
+dc <- ggplot(MANOVA, aes(x=Antlers, y=d18O_app, fill=Antlers)) + 
+  geom_violin(trim=FALSE)+
+  geom_boxplot(width=0.1, fill="white")+
+  labs(title="Antler distribution of ẟ18O values",x="Antlers (PEL-#)", y = "ẟ18O ‰")
+dc + theme_classic()+
+  geom_jitter(position=position_jitter(width = 0.08), alpha=0.3)+ 
+  theme(text = element_text(size = 14))+
+  ylab(expression(delta^18*"O"[VBDP]*~" (‰)"))
+```
+
+```{r}
+da <- ggplot(MANOVA, aes(x=Antlers, y=d13C_col, fill=Antlers)) + 
+  geom_violin(trim=FALSE)+
+  geom_boxplot(width=0.1, fill="white")+
+  labs(title="Antler distribution of ẟ13C collagen values",x="Antlers (PEL-#)", y = "ẟ13C collagen ‰")
+da + theme_classic()+
+  geom_jitter(position=position_jitter(width = 0.08), alpha=0.3)+ 
+  theme(text = element_text(size = 14))+
+  ylab(expression(delta^13*"C"[VBDP]*~"collagen (‰)"))+
+  xlab("Antlers (PEL-#)")
+```
+
+```{r}
+dn <- ggplot(MANOVA, aes(x=Antlers, y=d15N_col, fill=Antlers)) + 
+  geom_violin(trim=FALSE)+
+  geom_boxplot(width=0.1, fill="white")+
+  labs(title="Antler distribution of ẟ15N values",x="Antlers (PEL-#)", y = "ẟ15N ‰")
+dn + theme_classic()+
+  geom_jitter(position=position_jitter(width = 0.08), alpha=0.3)+ 
+  theme(text = element_text(size = 14))+
+  ylab(expression(delta^15*"N"[VBDP]*~" (‰)"))
+```
+
+```{r, arrange}
+ggarrange(dc, dp, dn, da, 
+          labels = c("A","B","C","D",
+          ncol = 1, nrow = 4))
+```
+
+```{r, boxplots}
+ggline(MANOVA, x = "Antlers", y = "d15N_col", 
+       add = c("mean_se", "jitter"), 
+       order = c("PEL-0090", "PEL-0114", "PEL-0164", "PEL-0165"),
+       ylab = "δ15N‰", xlab = "Antlers")
+```
+
+```{r, boxplots}
+dpe <- ggline(MANOVA, x = "Antlers", y = "d13C_col", 
+       add = c("mean_se", "jitter"), 
+       order = c("PEL-0090", "PEL-0114", "PEL-0164", "PEL-0165"), color = "Antlers",
+       ylab = "δ13C‰", xlab = "Antlers (PEL-#)")+
+  labs(title="δ15N of Antlers",x="Antlers (PEL-#)", y = "δ15N")
+dpe + theme_classic()
+```
+
+```{r, boxplots}
+ggline(MANOVA, x = "Antlers", y = "d15N_col", 
+       add = c("mean_se", "jitter"), 
+       order = c("PEL-0090", "PEL-0114", "PEL-0164", "PEL-0165"),
+       ylab = "δ15N‰", xlab = "Antlers")
+```
+
+```{r, boxplots}
+ggline(MANOVA, x = "Antlers", y = "d13C_app", 
+       add = c("mean_se", "jitter"), 
+       order = c("PEL-0090", "PEL-0114", "PEL-0164", "PEL-0165"),
+       ylab = "δ15N‰", xlab = "Antlers")
+```
+
+```{r, boxplots}
+ggline(MANOVA, x = "Antlers", y = "d18O_app", 
+       add = c("mean_se", "jitter"), 
+       order = c("PEL-0090", "PEL-0114", "PEL-0164", "PEL-0165"),
+       ylab = "δ15N‰", xlab = "Antlers")
+```
+
+```{r, MANOVA}
+manova(cbind(d13C_app, d13C_col, d15N_col, d18O_app) ~ Antlers, data = MANOVA)
+```
+
+
+

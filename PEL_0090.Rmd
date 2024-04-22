@@ -1,0 +1,223 @@
+---
+title: "50 years avg PEL90"
+author: "Julien Royer"
+date: "10/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE, regression}
+LR_T_Min <- lm(as.numeric(`d18O_app`) ~ as.numeric(`Tmin`), data = PEL_90_Feb_Nov)
+summary(LR_T_Min)
+```
+
+```{r pressure, echo=FALSE, regression}
+ggscatter(PEL_90_Feb_Nov, x = "Tmin", y = "d18O_app",           add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Tmin", ylab = "d18O_app")
+```
+
+```{r pressure, echo=FALSE, regression}
+LR_T_Max <- lm(as.numeric(`d18O_app`) ~ as.numeric(`Tmax`), data = PEL_90_Feb_Nov)
+summary(LR_T_Max)
+```
+
+```{r pressure, echo=FALSE, regression}
+ggscatter(PEL_90_Feb_Nov, x = "Tmax", y = "d18O_app",           add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Tmax", ylab = "d18O_app")
+```
+
+```{r pressure, echo=FALSE, regression}
+LR_Precip <- lm(as.numeric(`d15N_col`) ~ as.numeric(`Rain`), data = PEL_90_Feb_Nov)
+summary(LR_Precip)
+```
+
+```{r pressure, echo=FALSE, regression}
+ggscatter(PEL_90_Feb_Nov, x = "Rain", y = "d15N_col",           add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Rain", ylab = "d15N_col")
+```
+
+```{r pressure, echo=FALSE, regression}
+LR_Precip <- lm(as.numeric(`d15N_col`) ~ as.numeric(`Tmin`), data = PEL_90_Feb_Nov)
+summary(LR_Precip)
+```
+
+```{r pressure, echo=FALSE, regression}
+ggscatter(PEL_90_Feb_Nov, x = "Tmin", y = "d15N_col",           add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Tmin", ylab = "d15N_col")
+```
+
+```{r pressure, echo=FALSE, regression}
+LR_Precip <- lm(as.numeric(`d15N_col`) ~ as.numeric(`Tmax`), data = PEL_90_Feb_Nov)
+summary(LR_Precip)
+```
+
+```{r pressure, echo=FALSE, regression}
+ggscatter(PEL_90_Feb_Nov, x = "Tmax", y = "d15N_col",           add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Tmax", ylab = "d15N_col")
+```
+
+```{r,multi-regression}
+MLR_Precip<- lm(as.numeric(`d18O_app`) ~ as.numeric(`Tmax`)+ as.numeric(`Tmin`)+ as.numeric(`Rain`), data = PEL_90_Feb_Nov)
+summary(MLR_Precip)
+```
+
+```{r,multi-regression}
+MLR_Precip<- lm(as.numeric(`d15N_col`) ~ as.numeric(`Tmax`)+ as.numeric(`Tmin`), data = PEL_90_Feb_Nov)
+summary(MLR_Precip)
+```
+
+```{r,multi-regression}
+MLR_Precip<- lm(as.numeric(`d13C_col`) ~ as.numeric(`Tmax`)+ as.numeric(`Tmin`)+ as.numeric(`Rain`), data = PEL_90_Feb_Nov)
+summary(MLR_Precip)
+```
+
+```{r,multi-regression}
+qqPlot(PEL_90_Feb_Nov$d15N_col)
+qqline(PEL_90_Feb_Nov$d15N_col, col = "steelblue", lwd = 2)
+```
+
+```{r,multi-regression}
+model <- lm(d18O_app~Tmin + Tmax + Rain + TmaxNOAA + TminNOAA + TavgNOAA + TprecipNOAA, data=PEL_90_Feb_Nov)
+res <- resid(model)
+plot(fitted(model), res)
+abline(0,0)
+qqnorm(res)
+qqline(res, col = "steelblue", lwd = 2)
+plot(density(res))
+```
+
+```{r, graph}
+wmo10 <- lm(d18O_app~Tmax, data = PEL_90_Feb_Nov)
+swmo10 <- summary(wmo10)
+sb01 <- ggplot(data=PEL_90_Feb_Nov, mapping = aes(x=Tmax, y=d18O_app, group = 1))+
+  geom_point()+
+  theme_bw()+
+  xlab("DIVA-GIS Max Temp ˚C")+
+  ylab(expression(delta^18*"O"[VBDP]*~" (‰)"))+
+  theme(text = element_text(size = 11.5))+
+  geom_smooth(method = "lm", se = FALSE) +
+  annotate("text", x = 9, y = -7.4, label=paste0("R square:", round(swmo10$adj.r.squared,2)), size = 3) + 
+  annotate("text", x = 9, y = -7.1, label=
+             sprintf("y = %.4f x + %.2f", coef(wmo10)[2], coef(wmo10)[1]), size = 3)+
+  annotate("text", x = 9, y = -6.8, label= "PEL-0090", size = 3)+
+theme(text = element_text(size = 10))
+sb01
+```
+
+```{r, graph}
+wmo11 <- lm(d18O_app~Tmin, data = PEL_90_Feb_Nov)
+swmo11 <- summary(wmo11)
+sb02 <- ggplot(data=PEL_90_Feb_Nov, mapping = aes(x=Tmin, y=d18O_app, group = 1))+
+  geom_point()+
+  theme_bw()+
+  xlab("DIVA-GIS Min Temp ˚C")+
+  ylab(expression(delta^18*"O"[VBDP]*~" (‰)"))+
+  theme(text = element_text(size = 11.5))+
+  geom_smooth(method = "lm", se = FALSE) +
+  annotate("text", x = -5, y = -6.7, label=paste0("R square:", round(swmo11$adj.r.squared,2)), size = 3) + 
+  annotate("text", x = -5, y = -6.4, label=
+             sprintf("y = %.4f x + %.2f", coef(wmo11)[2], coef(wmo11)[1]), size = 3)+
+  annotate("text", x = -5, y = -6.1, label= "PEL-0090", size = 3)+
+theme(text = element_text(size = 10))
+sb02
+```
+
+```{r, graph}
+wmo12 <- lm(d15N_col~Rain, data = PEL_90_Feb_Nov)
+swmo12 <- summary(wmo12)
+sb00003 <- ggplot(data=PEL_90_Feb_Nov, mapping = aes(x=Rain, y=d15N_col, group = 1))+
+  geom_point()+
+  theme_bw()+
+  xlab("DIVA-GIS MMP cm")+
+  ylab(expression(delta^15*"N"[Air]*~" (‰)"))+
+  theme(text = element_text(size = 12))+
+  geom_smooth(method = "lm", se = FALSE) +
+  annotate("text", x = 4.6, y = 5.1, label=paste0("R square:", round(swmo12$adj.r.squared,2)), size = 3) + 
+  annotate("text", x = 5, y = 5.3, label=
+             sprintf("y = %.4f x + %.2f", coef(wmo12)[2], coef(wmo12)[1]), size = 3)+
+  annotate("text", x = 4.5, y = 5.5, label= "PEL-0090", size = 3)+
+theme(text = element_text(size = 10))
+sb00003
+```
+
+```{r, graph}
+wmo12 <- lm(d15N_col~Tmax, data = PEL_90_Feb_Nov)
+swmo12 <- summary(wmo12)
+sb03 <- ggplot(data=PEL_90_Feb_Nov, mapping = aes(x=Tmax, y=d15N_col, group = 1))+
+  geom_point()+
+  theme_bw()+
+  xlab("DIVA-GIS Max Temp ˚C")+
+  ylab(expression(delta^15*"N"[Air]*~" (‰)"))+
+  theme(text = element_text(size = 12))+
+  geom_smooth(method = "lm", se = FALSE) +
+  annotate("text", x = 4.6, y = 5.1, label=paste0("R square:", round(swmo12$adj.r.squared,2)), size = 3) + 
+  annotate("text", x = 6.9, y = 5.3, label=
+             sprintf("y = %.4f x + %.2f", coef(wmo12)[2], coef(wmo12)[1]), size = 3)+
+  annotate("text", x = 3, y = 5.5, label= "PEL-0090", size = 3)+
+theme(text = element_text(size = 10))
+sb03
+```
+
+```{r, graph}
+wmo12 <- lm(d15N_col~Tmin, data = PEL_90_Feb_Nov)
+swmo12 <- summary(wmo12)
+sb07 <- ggplot(data=PEL_90_Feb_Nov, mapping = aes(x=Tmin, y=d15N_col, group = 1))+
+  geom_point()+
+  theme_bw()+
+  xlab("DIVA-GIS Min Temp ˚C")+
+  ylab(expression(delta^15*"N"[Air]*~" (‰)"))+
+  theme(text = element_text(size = 12))+
+  geom_smooth(method = "lm", se = FALSE) +
+  annotate("text", x = -6, y = 5.1, label=paste0("R square:", round(swmo12$adj.r.squared,2)), size = 3) + 
+  annotate("text", x = -4, y = 5.3, label=
+             sprintf("y = %.4f x + %.2f", coef(wmo12)[2], coef(wmo12)[1]), size = 3)+
+  annotate("text", x = 5, y = -6.7, label= "PEL-0090", size = 3)+
+theme(text = element_text(size = 10))
+sb07
+```
+
+```{r, graph}
+wmo13 <- lm(d15N_col~Rain, data = PEL_164)
+swmo12 <- summary(wmo12)
+sb03 <- ggplot(data=PEL_164, mapping = aes(x=Rain, y=d15N_col, group = 1))+
+  geom_point()+
+  theme_bw()+
+    ggtitle(expression("PEL-0165 carbon apatite against Max Temp ˚C"))+
+  xlab("Max Temp ˚C")+
+  ylab(expression(delta^13*"C"[VBDP]*~"apatite (‰)"))+
+  theme(text = element_text(size = 12))+
+  geom_smooth(method = "lm", se = FALSE) +
+  annotate("text", x = 10, y = 4.1, label=paste0("R square:", round(swmo12$adj.r.squared,2))) + 
+  annotate("text", x = 10, y = 4.5, label=
+             sprintf("y = %.4f x + %.2f", coef(wmo12)[2], coef(wmo12)[1]))
+sb03
+```
+
+```{r, arrange}
+ggarrange(sb001, sb01, sb002, sb02, 
+          ncol = 2, nrow = 2)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

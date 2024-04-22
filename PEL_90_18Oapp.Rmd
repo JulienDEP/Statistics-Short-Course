@@ -1,0 +1,419 @@
+---
+title: "PEL_0090_18O"
+author: "Julien Royer"
+date: "12/28/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r, packages}
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+install.packages("emmeans")
+library(emmeans)
+install.packages("ARTool")
+library(ARTool)
+install.packages("phia")
+library(phia)
+library(ggpubr)
+library(car)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE, regression}
+LR_Temp <- lm(as.numeric(`Max_Temp_C`) ~ as.numeric(`d18O_app`), data = PEL_90_Feb_Nov)
+summary(LR_Temp)
+```
+
+```{r pressure, echo=FALSE, regression}
+LR_Temp_avg <- lm(as.numeric(`d18O_app`) ~ as.numeric(`Avg_Temp_C`), data = PEL_90_Feb_Nov)
+summary(LR_Temp_avg)
+```
+
+```{r pressure, echo=FALSE, regression}
+LR_Temp_min <- lm(as.numeric(`d18O_app`) ~ as.numeric(`Min_Temp_C`), data = PEL_90_Feb_Nov)
+summary(LR_Temp_min)
+```
+
+```{r pressure, echo=FALSE, regression}
+LR_Precip_Max <- lm(as.numeric(`d18O_app`) ~ as.numeric(`Max_Precip_cm`), data = PEL_90_Feb_Nov)
+summary(LR_Precip_Max)
+```
+
+```{r pressure, echo=FALSE, regression}
+ggscatter(PEL_90_Feb_Nov, x = "Max_Precip_cm", y = "d18O_app",           add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Max_Precip_cm", ylab = "d18O_app")
+```
+
+```{r pressure, echo=FALSE, regression}
+LR_Precip_Avg <- lm(as.numeric(`d18O_app`) ~ as.numeric(`Average_Precip_cm`), data = PEL_90_Feb_Nov)
+summary(LR_Precip_Avg)
+```
+
+```{r, normality}
+ggqqplot(LR_Precip_Avg$residuals)
+```
+
+```{r pressure, echo=FALSE, regression}
+LR_RH_Max <- lm(as.numeric(`d18O_app`) ~ as.numeric(`Max_RH`), data = PEL_90_Feb_Nov)
+summary(LR_RH_Max)
+```
+PEL_90_Feb_Nov %>%
+mutate(Month = factor(Month, levels=c("February", "March", "April", "May", "June", "July", "August", "September", "October", "November"))) %>%
+months <-rep(c("feb", "mar", "apr", "may", "jun", 
+               "jul", "aug", "sep", "oct", "nov"))
+```{r, graph}
+m1 <- lm(d18O_app~Avg_RH, data = PEL_90_Feb_Nov)
+sm1 <- summary(m1)
+sp <- ggplot(data=PEL_90_Feb_Nov, mapping = aes(x=Stag_1_app, y=d18O_app, group = 1))+
+  geom_line()+
+  geom_point()+
+  theme_bw()+
+    ggtitle("Distal to proximal end of main beam ẟ18O ‰ values for PEL-0090")+
+  xlab("Months")+
+  ylab("ẟ18O ‰")+
+  geom_smooth(method = "lm", se = FALSE) +
+  annotate("text", x = 2.2, y = -3, label=paste0("R square:", round(sm1$r.squared,3))) + 
+  annotate("text", x = 2.2, y = -3.5, label=
+             sprintf("y = %.4f x + %.2f", coef(m1)[2], coef(m1)[1]))
+sp
+```
+
+```{r, graph}
+sp1 <- ggplot(data=PEL_90_Feb_Nov, mapping = aes(x=factor(Month,levels=month.abb), y=`d18O_app`, group = 1))+
+  geom_line()+
+  geom_point()+
+  theme_bw()+
+    ggtitle("PEL-0090 ẟ18O ‰ values")+
+  xlab("PEL-Number")+
+  ylab("ẟ18O ‰") 
+sp1
+```
+
+```{r, graph}
+sp2 <- ggplot(data=PEL_90_Feb_Nov, mapping = aes(x=factor(Month,levels=month.abb), y=`Max_RH`, group = 1))+
+  geom_line()+
+  geom_point()+
+  theme_bw()+
+    ggtitle("Montly mean maximum of RH % for PEL-0090")+
+  xlab("Months")+
+  ylab("Max RH %") 
+sp2
+```
+
+```{r, arrange}
+ggarrange(sp2, sp1, 
+          labels = c("A", "B"),
+          ncol = 1, nrow = 2)
+```
+
+```{r, graph}
+sp3 <- ggplot(data=PEL_90_Feb_Nov, mapping = aes(x=factor(Month,levels=month.abb), y=`Average_Precip_cm`, group = 1))+
+  geom_line()+
+  geom_point()+
+  theme_bw()+
+    ggtitle("Montly mean average of precipitation in cm for PEL-0090")+
+  xlab("Months")+
+  ylab("Avg Precip cm") 
+sp3
+```
+
+```{r, arrange}
+ggarrange(sp1, sp2, sp3,
+          labels = c("A", "B", "C"),
+          ncol = 1, nrow = 3)
+```
+
+
+```{r pressure, echo=FALSE}
+
+
+m1 <- lm(as.numeric(d18O_app)~as.numeric(Avg_RH), data = PEL_90_Feb_Nov)
+sm1 <- summary(m1)
+
+coeff <- 0.05
+PEL_90_Feb_Nov %>%
+ggplot(aes(x=Stag_1_app)) +
+  geom_line(aes(y = d18O_app, group = 1, color = "red")) +
+  geom_point(aes(y=d18O_app))+
+  geom_line(aes(y = Avg_RH * coeff, group = 2, color = "blue")) +
+  geom_point(aes(y=Avg_RH * coeff))+
+  scale_y_continuous(name = "d18O ‰", sec.axis = sec_axis(~.*coeff, name = "Average RH"))+
+  theme_bw()+
+    ggtitle("Seasonal Variations")+
+  annotate("text", x = 2.5, y = 0, label=paste0("R square:", round(sm1$r.squared,3)))
+```
+
+```{r pressure, echo=FALSE, regression}
+LR_RH_Avg <- lm(as.numeric(`d18O_app`) ~ as.numeric(`Avg_RH`), data = PEL_90_Feb_Nov)
+summary(LR_RH_Avg)
+```
+
+```{r pressure, echo=FALSE, regression}
+LR_RH_Min <- lm(as.numeric(`d18O_app`) ~ as.numeric(`Min_RH`), data = PEL_90_Feb_Nov)
+summary(LR_RH_Min)
+```
+
+```{r,multi-regression}
+MLR_Temp <- lm(as.numeric(`d18O_app`) ~ as.numeric(`Max_Temp_C`)+as.numeric(`Avg_Temp_C`)+as.numeric(`Min_Temp_C`), data = PEL_90_Feb_Nov)
+summary(MLR_Temp)
+```
+
+```{r,multi-regression}
+MLR_Precip<- lm(as.numeric(`d18O_app`) ~ as.numeric(`Max_Temp_C`)+as.numeric(`Avg_Temp_C`), data = PEL_90_Feb_Nov)
+summary(MLR_Precip)
+```
+
+```{r, normality}
+ggqqplot(MLR_Precip$residuals)
+```
+
+```{r, normality}
+ggqqplot(LR_Precip_Avg$residuals)
+```
+
+```{r,multi-regression}
+MLR_RH <- lm(as.numeric(`d18O_app`) ~ as.numeric(`Max_RH`)+as.numeric(`Avg_RH`), data = PEL_90_Feb_Nov)
+summary(MLR_RH)
+```
+
+```{r, MLR}
+qqnorm(MLR_Precip$residuals)
+qqline(MLR_Precip$residuals)
+```
+
+```{r, MLR}
+qqnorm(MLR_RH$residuals)
+qqline(MLR_RH$residuals)
+```
+
+```{r,multi-regression}
+MLR_18O <- lm(as.numeric(`d18O_app`) ~ as.numeric(`Average_Precip_cm`)+as.numeric(`Avg_RH`), data = PEL_90_Feb_Nov)
+summary(MLR_18O)
+```
+
+```{r, MLR}
+qqnorm(MLR_18O$residuals)
+qqline(MLR_18O$residuals)
+```
+
+```{r, MLR}
+plot(MLR_18O$residuals)
+```
+
+```{r pressure, echo=FALSE, regression}
+LR_Precip_Av <- lm(as.numeric(`d18O_app`) ~ as.numeric(`Max_RH`), data = PEL_90_Feb_Nov)
+summary(LR_Precip_Av)
+```
+
+```{r pressure, echo=FALSE, regression}
+ggscatter(PEL_90_Feb_Nov, x = "Max_RH", y = "d18O_app",           add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Max_RH", ylab = "d18O_app")
+```
+
+```{r pressure, echo=FALSE, regression}
+ggscatter(PEL_90_Feb_Nov, x = "Avg_RH", y = "d18O_app",           add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Avg_RH", ylab = "d18O_app")
+```
+
+```{r pressure, echo=FALSE, regression}
+LR_Precip_Av <- lm(`d18O_app` ~ `Avg_RH`, data = PEL_90_Feb_Nov)
+summary(LR_Precip_Av)
+```
+
+```{r pressure, echo=FALSE, regression}
+ggscatter(PEL_90_Feb_Nov, x = "Average_Precip_cm", y = "d18O_app",           add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Average_Precip_cm", ylab = "d18O_app")
+```
+
+```{r pressure, echo=FALSE, regression}
+LR_Precip_Av <- lm(`d18O_app` ~ `Average_Precip_cm`, data = PEL_90_Feb_Nov)
+summary(LR_Precip_Av)
+```
+
+```{r, graph}
+m2 <- lm(d13C_app~Max_RH, data = PEL_90_Feb_Nov)
+sm2 <- summary(m2)
+se <- ggplot(data=PEL_90_Feb_Nov, mapping = aes(x=Max_RH, y=d13C_app, group = 1))+
+  geom_point()+
+  theme_bw()+
+    ggtitle(expression("PEL-0090 stable isotope carbon apatite against monthly mean maximum relative humidity"))+
+  xlab("Max RH %")+
+  ylab(expression(delta^13*"C"[VBDP]*~"apatite (‰)"))+
+  theme(text = element_text(size = 15))+
+  geom_smooth(method = "lm", se = FALSE) +
+  annotate("text", x = 86, y = -7.4, label=paste0("R square:", round(sm2$adj.r.squared,2))) + 
+  annotate("text", x = 86, y = -7.46, label=
+             sprintf("y = %.4f x + %.2f", coef(m2)[2], coef(m2)[1]))
+se
+```
+
+```{r, graph}
+m7 <- lm(d18O_app~Max_RH, data = PEL_90_Feb_Nov)
+sm7 <- summary(m7)
+sf <- ggplot(data=PEL_90_Feb_Nov, mapping = aes(x=Max_RH, y=d18O_app, group = 1))+
+  geom_point()+
+  theme_bw()+
+    ggtitle(expression("PEL-0090 oxygen isotope against Max RH %"))+
+  xlab("Max RH %")+
+  ylab(expression(delta^18*"O"[VBDP]*~"apatite (‰)"))+
+  theme(text = element_text(size = 12))+
+  geom_smooth(method = "lm", se = FALSE) +
+  annotate("text", x = 80, y = -7, label=paste0("R square:", round(sm7$adj.r.squared,2))) + 
+  annotate("text", x = 80, y = -7.25, label=
+             sprintf("y = %.4f x + %.2f", coef(m7)[2], coef(m7)[1]))
+sf
+```
+
+```{r, graph}
+m8 <- lm(d18O_app~Avg_RH, data = PEL_90_Feb_Nov)
+sm8 <- summary(m8)
+sg <- ggplot(data=PEL_90_Feb_Nov, mapping = aes(x=Avg_RH, y=d18O_app, group = 1))+
+  geom_point()+
+  theme_bw()+
+    ggtitle(expression("PEL-0090 oxygen isotope against Avg RH %"))+
+  xlab("Avg RH %")+
+  ylab(expression(delta^18*"O"[VBDP]*~"apatite (‰)"))+
+  theme(text = element_text(size = 12))+
+  geom_smooth(method = "lm", se = FALSE) +
+  annotate("text", x = 65, y = -7, label=paste0("R square:", round(sm8$adj.r.squared,2))) + 
+  annotate("text", x = 65, y = -7.25, label=
+             sprintf("y = %.4f x + %.2f", coef(m8)[2], coef(m8)[1]))
+sg
+```
+
+```{r, arrange}
+ggarrange(sf, sg, 
+          labels = c("A","B",
+          ncol = 1, nrow = 2))
+```
+
+```{r, graph}
+m9 <- lm(d18O_app~Average_Precip_cm, data = PEL_90_Feb_Nov)
+sm9 <- summary(m9)
+sh <- ggplot(data=PEL_90_Feb_Nov, mapping = aes(x=Average_Precip_cm, y=d18O_app, group = 1))+
+  geom_point()+
+  theme_bw()+
+    ggtitle(expression("PEL-0090 oxygen stable isotope against monthly mean average precipitation"))+
+  xlab("Avg Precip cm")+
+  ylab(expression(delta^18*"O"[VBDP]*~"apatite (‰)"))+
+  theme(text = element_text(size = 15))+
+  geom_smooth(method = "lm", se = FALSE) +
+  annotate("text", x = 0.2, y = -7, label=paste0("R square:", round(sm9$adj.r.squared,2))) + 
+  annotate("text", x = 0.2, y = -7.25, label=
+             sprintf("y = %.4f x + %.2f", coef(m9)[2], coef(m9)[1]))
+sh
+```
+
+```{r,multi-regression}
+MLR_Precip_RH_Temp<- lm(as.numeric(`d18O_app`) ~ +`MLR_Precip`, `MLR_Temp`, data = PEL_90_Feb_Nov)
+summary(MLR_Precip_RH_Temp)
+```
+
+```{r, graph}
+m13 <- lm(d15N_col~Max_Temp_C, data = PEL_90_Feb_Nov)
+sm13 <- summary(m13)
+sl <- ggplot(data=PEL_90_Feb_Nov, mapping = aes(x=Max_Temp_C, y=d15N_col, group = 1))+
+  geom_point()+
+  theme_bw()+
+    ggtitle(expression("PEL-0090 nitrogen against Max Temp ˚C"))+
+  xlab("Max Temp ˚C")+
+  ylab(expression(delta^15*"N"[Air]*~"collagen (‰)"))+
+  theme(text = element_text(size = 12))+
+  geom_smooth(method = "lm", se = FALSE) +
+  annotate("text", x = 15, y = 5.2, label=paste0("R square:", round(sm13$adj.r.squared,2))) + 
+  annotate("text", x = 15, y = 5.05, label=
+             sprintf("y = %.4f x + %.2f", coef(m13)[2], coef(m13)[1]))
+sl
+```
+
+```{r, graph}
+m14 <- lm(d15N_col~Avg_Temp_C, data = PEL_90_Feb_Nov)
+sm14 <- summary(m14)
+sm <- ggplot(data=PEL_90_Feb_Nov, mapping = aes(x=Avg_Temp_C, y=d15N_col, group = 1))+
+  geom_point()+
+  theme_bw()+
+    ggtitle(expression("PEL-0090 nitrogen against Avg Temp ˚C"))+
+  xlab("Avg Temp ˚C")+
+  ylab(expression(delta^15*"N"[Air]*~"collagen (‰)"))+
+  theme(text = element_text(size = 12))+
+  geom_smooth(method = "lm", se = FALSE) +
+  annotate("text", x = 5, y = 5.2, label=paste0("R square:", round(sm14$adj.r.squared,2))) + 
+  annotate("text", x = 5, y = 5.05, label=
+             sprintf("y = %.4f x + %.2f", coef(m14)[2], coef(m14)[1]))
+sm
+```
+```{r pressure, echo=FALSE, regression}
+ggscatter(PEL_90_Feb_Nov, x = "Avg_Temp_C", y = "d15N_col",           add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Avg_Temp_C", ylab = "d15N_col")
+```
+
+```{r pressure, echo=FALSE, regression}
+LR_Precip_Av <- lm(`d15N_col` ~ `Avg_Temp_C`, data = PEL_90_Feb_Nov)
+summary(LR_Precip_Av)
+```
+
+```{r pressure, echo=FALSE, regression}
+ggscatter(PEL_90_Feb_Nov, x = "Max_Temp_C", y = "d15N_col",           add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Max_Temp_C", ylab = "d15N_col")
+```
+
+```{r pressure, echo=FALSE, regression}
+LR_Precip_Av <- lm(`d15N_col` ~ `Max_Temp_C`, data = PEL_90_Feb_Nov)
+summary(LR_Precip_Av)
+```
+
+```{r pressure, echo=FALSE, regression}
+ggscatter(PEL_90_Feb_Nov, x = "Min_Temp_C", y = "d15N_col",           add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Min_Temp_C", ylab = "d15N_col")
+```
+
+```{r pressure, echo=FALSE, regression}
+LR_Precip_Av <- lm(`d15N_col` ~ `Min_Temp_C`, data = PEL_90_Feb_Nov)
+summary(LR_Precip_Av)
+```
+
+```{r, graph}
+m15 <- lm(d15N_col~Min_Temp_C, data = PEL_90_Feb_Nov)
+sm15 <- summary(m15)
+sn <- ggplot(data=PEL_90_Feb_Nov, mapping = aes(x=Min_Temp_C, y=d15N_col, group = 1))+
+  geom_point()+
+  theme_bw()+
+    ggtitle(expression("PEL-0090 nitrogen against Min Temp ˚C"))+
+  xlab("Min Temp ˚C")+
+  ylab(expression(delta^15*"N"[Air]*~"collagen (‰)"))+
+  theme(text = element_text(size = 12))+
+  geom_smooth(method = "lm", se = FALSE) +
+  annotate("text", x = -5, y = 5.2, label=paste0("R square:", round(sm15$adj.r.squared,2))) + 
+  annotate("text", x = -5, y = 5.05, label=
+             sprintf("y = %.4f x + %.2f", coef(m15)[2], coef(m15)[1]))
+sn
+```
+
+```{r, arrange}
+ggarrange(sl, sm, sn, 
+          labels = c("A","B","C",
+          ncol = 1, nrow = 3))
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
